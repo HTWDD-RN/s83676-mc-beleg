@@ -11,7 +11,8 @@
 #define PLAYERS 1
 
 #define MAX_ITEMS 5
-#define MIN_ITEM_SPAWN_TICKS 10
+#define MIN_ITEM_SPAWN_TICKS 100
+#define BLINK_TICKS 10
 
 
 class Statistics {
@@ -135,6 +136,11 @@ class Item {
       mPosX = 255;
       mPosY = 255;
     }
+
+    void clear() {
+      mDisplay->setPixelColor(mPosX, mPosY, 0x000000, true);
+      remove();
+    }
   private:
     Matrix* mDisplay;
     byte mPosX;
@@ -167,7 +173,7 @@ class Snake {
     void initItems(Item* items) {
       gameItems = items;
     }
-    bool moveForward();
+    bool moveForward(bool* moved);
     void turnRight();
     void turnLeft();
 
@@ -189,6 +195,8 @@ class Snake {
     int mLength;
     byte mSnakePartsX[LEDCOUNT];
     byte mSnakePartsY[LEDCOUNT];
+
+    int ticksSinceLastMove;
 
     Item* gameItems;
 
@@ -223,6 +231,7 @@ void Snake::reset() {
   mDirection = UP;
   mDead = false;
   mBlinkColor = false;
+  ticksSinceLastMove = 0;
 
   for(int i = 0; i < mLength; i++) {
     mSnakePartsX[i] = mStartX;
@@ -242,7 +251,15 @@ void Snake::blink() {
   }
 }
 
-bool Snake::moveForward() {
+bool Snake::moveForward(bool* moved) {
+
+  if(ticksSinceLastMove < 10 - (mLength - mStartLength) / 5) {
+    ticksSinceLastMove++;
+    *moved = false;
+    return true;
+  }
+  ticksSinceLastMove = 0;
+  *moved = true;
 
   byte newHeadX;
   byte newHeadY;
@@ -310,6 +327,20 @@ void Snake::turnLeft() {
   }
 }
 
+// class Player: public Snake {
+//   public:
+//     Player(Matrix* display, int initialLength, byte x, byte y, CRGB color)
+//       :Snake(display, initialLength, x, y, color) {
+//         mAllowNextDirection = true;
+//         mJoyStickXDefaultPosition = true;
+//         mJoystickButtonDefaultPosition = true;
+//       }
+//   private:
+//     bool mAllowNextDirection;
+//     bool mJoyStickXDefaultPosition;
+//     bool mJoystickButtonDefaultPosition;
+// };
+
 Matrix m;
 LiquidCrystal lcd(12, 11, 5, 4, 3, 2);
 Snake snake(&m, 5, 4, 3, 0x00FF00);
@@ -319,8 +350,14 @@ int ticksSinceLastItem;
 int nextItemTickCount;
 Item items[MAX_ITEMS](&m);
 
-bool gamePaused = true;
+int ticksSinceLastAnimation;
+
+byte gameState = 0;
 long lastGameTick;
+
+bool allowNextDirection = true;
+bool joyStickXDefaultPosition = true;
+bool joystickButtonDefaultPosition = true;
 
 void setup() {
   Serial.begin(9600);
@@ -328,32 +365,13 @@ void setup() {
   snake.initItems(items);
   m.show();
   ticksSinceLastItem = 0;
+  ticksSinceLastAnimation = 0;
   nextItemTickCount = MIN_ITEM_SPAWN_TICKS;
   lastGameTick = millis();
 }
 
 void gameTick() {
   lastGameTick = millis();
-
-
-  int readX = analogRead(JOYSTICKX);
-  int readY = analogRead(JOYSTICKY);
-
-  if(readX < 400) {
-    Serial.println("left");
-  }
-  if(readX > 600) {
-    Serial.println("right");
-  }
-
-  if(readY < 400) {
-    Serial.println("up");
-  }
-
-  if(readY > 600) {
-    Serial.println("down");
-  }
-  
 
   if(ticksSinceLastItem > nextItemTickCount) {
     ticksSinceLastItem = 0;
@@ -370,51 +388,87 @@ void gameTick() {
       }
       break;
     }
+    nextItemTickCount = MIN_ITEM_SPAWN_TICKS * random(100, 500) / 100.0;
+    Serial.print("next item will be generated in ");
+    Serial.print(nextItemTickCount);
+    Serial.println(" ticks");
   }
   ticksSinceLastItem++;
 
 
-  if(!gamePaused) {
-    bool survived = snake.moveForward();
+  if(gameState == 2) {
+
+    bool moved;
+    bool survived = snake.moveForward(&moved);
+
+    if(moved) {
+      allowNextDirection = true;
+    }
+
     stats.setPlayerScore(0, snake.getScore());
     if(!survived) {
       snake.die();
       stats.playerDead(0);
-      gamePaused = true;
+      gameState = 1;
     }
     stats.printPlayers();
   }
 
-  if(snake.dead()) {
+  if(snake.dead() && ticksSinceLastAnimation > BLINK_TICKS) {
+    ticksSinceLastAnimation = 0;
     snake.blink();
   }
+  ticksSinceLastAnimation++;
   m.show();
 }
 
 void loop() {
 
-  if(gamePaused && digitalRead(BUTTONPIN)) {
-    Serial.println("start!");
-    snake.reset(); stats.reset(); stats.printPlayers();
-    gamePaused = false;
+  if(!digitalRead(BUTTONPIN)) {
+    joystickButtonDefaultPosition = true;
+  }
+  //start
+  if(gameState == 0 && digitalRead(BUTTONPIN) && joystickButtonDefaultPosition) {
     lastGameTick = millis();
+    gameState = 2;
+    joystickButtonDefaultPosition = false;
+  }
+
+  //reset
+  if(gameState == 1 && digitalRead(BUTTONPIN)  && joystickButtonDefaultPosition) {
+    snake.reset(); stats.reset(); stats.printPlayers();
+    gameState = 0;
+    for(int i = 0; i < MAX_ITEMS; i++) {
+      items[i].clear();
+    }
+    joystickButtonDefaultPosition = false;
   }
 
   //verhindert, dass bei pausiertem Spiel Items generiert werden
-  if(gamePaused) {
+  if(gameState != 2) {
     ticksSinceLastItem = 0;
   }
 
-  if(Serial.available()) {
-    char command = Serial.read();
-    
-    switch(command) {
-      case 'r': snake.turnRight(); break;
-      case 'l': snake.turnLeft(); break;
-    }
+  int readX = analogRead(JOYSTICKX);
+  int readY = analogRead(JOYSTICKY);
+
+  if(readX < 350 && allowNextDirection && joyStickXDefaultPosition) {
+    snake.turnLeft();
+    allowNextDirection = false;
+    joyStickXDefaultPosition = false;
+  }
+  
+  if(readX > 650 && allowNextDirection && joyStickXDefaultPosition) {
+    snake.turnRight();
+    allowNextDirection = false;
+    joyStickXDefaultPosition = false;
   }
 
-  if(millis() - lastGameTick > 500) {
+  if(readX >= 350 && readX <= 650) {
+    joyStickXDefaultPosition = true;
+  }
+
+  if(millis() - lastGameTick > 50) {
     gameTick();
   }
 }
