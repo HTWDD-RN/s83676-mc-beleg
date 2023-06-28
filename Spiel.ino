@@ -327,23 +327,50 @@ void Snake::turnLeft() {
   }
 }
 
-// class Player: public Snake {
-//   public:
-//     Player(Matrix* display, int initialLength, byte x, byte y, CRGB color)
-//       :Snake(display, initialLength, x, y, color) {
-//         mAllowNextDirection = true;
-//         mJoyStickXDefaultPosition = true;
-//         mJoystickButtonDefaultPosition = true;
-//       }
-//   private:
-//     bool mAllowNextDirection;
-//     bool mJoyStickXDefaultPosition;
-//     bool mJoystickButtonDefaultPosition;
-// };
+class Player: public Snake {
+  public:
+    Player(Matrix* display, int initialLength, byte x, byte y, CRGB color)
+      :Snake(display, initialLength, x, y, color) {
+        mAllowNextDirection = true;
+        mJoyStickXDefaultPosition = true;
+      }
+    void handleJoyStick(int joyStickX);
+    bool moveForward();
+  private:
+    bool mAllowNextDirection;
+    bool mJoyStickXDefaultPosition;
+};
+
+void Player::handleJoyStick(int joyStickX) {
+  if(joyStickX < 350 && mAllowNextDirection && mJoyStickXDefaultPosition) {
+    turnLeft();
+    mAllowNextDirection = false;
+    mJoyStickXDefaultPosition = false;
+  }
+  
+  if(joyStickX > 650 && mAllowNextDirection && mJoyStickXDefaultPosition) {
+    turnRight();
+    mAllowNextDirection = false;
+    mJoyStickXDefaultPosition = false;
+  }
+
+  if(joyStickX >= 350 && joyStickX <= 650) {
+    mJoyStickXDefaultPosition = true;
+  }
+}
+
+bool Player::moveForward() {
+  bool hasMoved;
+  bool survived = Snake::moveForward(&hasMoved);
+  if(hasMoved) {
+    mAllowNextDirection = true;
+  }
+  return survived;
+}
 
 Matrix m;
 LiquidCrystal lcd(12, 11, 5, 4, 3, 2);
-Snake snake(&m, 5, 4, 3, 0x00FF00);
+Player player(&m, 5, 4, 3, 0x00FF00);
 Statistics stats(&lcd);
 
 int ticksSinceLastItem;
@@ -355,14 +382,12 @@ int ticksSinceLastAnimation;
 byte gameState = 0;
 long lastGameTick;
 
-bool allowNextDirection = true;
-bool joyStickXDefaultPosition = true;
 bool joystickButtonDefaultPosition = true;
 
 void setup() {
   Serial.begin(9600);
   pinMode(BUTTONPIN, INPUT);
-  snake.initItems(items);
+  player.initItems(items);
   m.show();
   ticksSinceLastItem = 0;
   ticksSinceLastAnimation = 0;
@@ -397,26 +422,20 @@ void gameTick() {
 
 
   if(gameState == 2) {
+    bool survived = player.moveForward();
 
-    bool moved;
-    bool survived = snake.moveForward(&moved);
-
-    if(moved) {
-      allowNextDirection = true;
-    }
-
-    stats.setPlayerScore(0, snake.getScore());
+    stats.setPlayerScore(0, player.getScore());
     if(!survived) {
-      snake.die();
+      player.die();
       stats.playerDead(0);
       gameState = 1;
     }
     stats.printPlayers();
   }
 
-  if(snake.dead() && ticksSinceLastAnimation > BLINK_TICKS) {
+  if(player.dead() && ticksSinceLastAnimation > BLINK_TICKS) {
     ticksSinceLastAnimation = 0;
-    snake.blink();
+    player.blink();
   }
   ticksSinceLastAnimation++;
   m.show();
@@ -436,7 +455,7 @@ void loop() {
 
   //reset
   if(gameState == 1 && digitalRead(BUTTONPIN)  && joystickButtonDefaultPosition) {
-    snake.reset(); stats.reset(); stats.printPlayers();
+    player.reset(); stats.reset(); stats.printPlayers();
     gameState = 0;
     for(int i = 0; i < MAX_ITEMS; i++) {
       items[i].clear();
@@ -452,21 +471,7 @@ void loop() {
   int readX = analogRead(JOYSTICKX);
   int readY = analogRead(JOYSTICKY);
 
-  if(readX < 350 && allowNextDirection && joyStickXDefaultPosition) {
-    snake.turnLeft();
-    allowNextDirection = false;
-    joyStickXDefaultPosition = false;
-  }
-  
-  if(readX > 650 && allowNextDirection && joyStickXDefaultPosition) {
-    snake.turnRight();
-    allowNextDirection = false;
-    joyStickXDefaultPosition = false;
-  }
-
-  if(readX >= 350 && readX <= 650) {
-    joyStickXDefaultPosition = true;
-  }
+  player.handleJoyStick(readX);
 
   if(millis() - lastGameTick > 50) {
     gameTick();
