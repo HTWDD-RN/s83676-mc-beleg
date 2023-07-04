@@ -10,25 +10,14 @@ class Snake {
   public:
     Snake(Matrix* display,int initialLength, byte x, byte y, CRGB color);
     void reset();
-    void die() {
-      mDead = true;
-    }
-    bool dead() {
-      return mDead;
-    }
-
+    void die();
+    bool dead();
     void blink();
-
-    void initItems(Item* items) {
-      gameItems = items;
-    }
+    void initItems(Item* items);
     bool moveForward(bool* moved);
     void turnRight();
     void turnLeft();
-
-    int getScore() {
-      return mLength - mStartLength;
-    }
+    int getScore();
   private:
     Matrix* mDisplay;
     CRGB mColor;

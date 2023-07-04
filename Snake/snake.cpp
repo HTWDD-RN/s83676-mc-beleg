@@ -34,6 +34,14 @@ void Snake::reset() {
   }
 }
 
+void Snake::die() {
+  mDead = true;
+}
+
+bool Snake::dead() {
+  return mDead;
+}
+
 void Snake::blink() {
   mBlinkColor = !mBlinkColor;
   for(int i = 0; i < mLength; i++) {
@@ -43,6 +51,10 @@ void Snake::blink() {
       mDisplay->setPixelColor(mSnakePartsX[i], mSnakePartsY[i], mColor, true);
     }
   }
+}
+
+void Snake::initItems(Item* items) {
+  gameItems = items;
 }
 
 bool Snake::moveForward(bool* moved) {
@@ -119,4 +131,8 @@ void Snake::turnLeft() {
   if(mDirection > 3) {
     mDirection = 3;
   }
+}
+
+int Snake::getScore() {
+  return mLength - mStartLength;
 }

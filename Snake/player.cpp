@@ -1,5 +1,11 @@
 #include "player.h"
 
+Player::Player(Matrix* display, int initialLength, byte x, byte y, CRGB color)
+       :Snake(display, initialLength, x, y, color) {
+  mAllowNextDirection = true;
+  mJoyStickXDefaultPosition = true;
+}
+
 void Player::handleJoyStick(int joyStickX) {
   if(joyStickX < 350 && mAllowNextDirection && mJoyStickXDefaultPosition) {
     turnLeft();
