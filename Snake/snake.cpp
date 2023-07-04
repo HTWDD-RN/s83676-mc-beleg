@@ -104,10 +104,11 @@ bool Snake::moveForward(bool* moved) {
   for(int i = mLength - 1; i > 0; i--) {
     mSnakePartsX[i] = mSnakePartsX[i - 1];
     mSnakePartsY[i] = mSnakePartsY[i - 1];
-    //Kollission mit sich selbst
-    if(mSnakePartsX[i] == newHeadX && mSnakePartsY[i] == newHeadY) {
-      return false;
-    }
+  }
+
+  //prüfe Kollission mit sich selbst
+  if(checkCollission(newHeadX, newHeadY)) {
+    return false;  
   }
 
   mSnakePartsX[0] = newHeadX;
@@ -116,6 +117,15 @@ bool Snake::moveForward(bool* moved) {
   //neuen ersten Pixel (Kopf) aktivieren
   mDisplay->setPixelColor(mSnakePartsX[0], mSnakePartsY[0], mColor, true);
   return true;
+}
+
+bool Snake::checkCollission(byte x, byte y) {
+  for(int i = 0; i < mLength; i++) {
+    if(mSnakePartsX[i] == x && mSnakePartsY[i] == y) {
+      return true;
+    }
+  }
+  return false;
 }
 
 void Snake::turnRight() {

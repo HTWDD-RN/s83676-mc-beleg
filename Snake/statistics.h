@@ -16,7 +16,6 @@ class Statistics {
     LiquidCrystal* mDisplay;
     int playerScores[PLAYERS];
     bool playersDead[PLAYERS];
-
 };
 
 #endif

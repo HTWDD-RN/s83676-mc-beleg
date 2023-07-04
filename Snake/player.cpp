@@ -30,5 +30,6 @@ bool Player::moveForward() {
   if(hasMoved) {
     mAllowNextDirection = true;
   }
+  //TODO: check, if snake will collide with other snake
   return survived;
 }

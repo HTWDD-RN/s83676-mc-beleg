@@ -15,6 +15,7 @@ class Snake {
     void blink();
     void initItems(Item* items);
     bool moveForward(bool* moved);
+    bool checkCollission(byte x, byte y);
     void turnRight();
     void turnLeft();
     int getScore();
