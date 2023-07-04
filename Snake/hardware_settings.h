@@ -1,0 +1,11 @@
+#ifndef HARDWARE_SETTINGS
+#define HARDWARE_SETTINGS
+
+#define LEDPIN 8
+#define LEDCOUNT 256
+
+#define BUTTONPIN 7
+#define JOYSTICKX A2
+#define JOYSTICKY A3
+
+#endif
