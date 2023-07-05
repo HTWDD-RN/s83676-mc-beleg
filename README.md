@@ -119,6 +119,7 @@ if(millis() - lastGameTick > 50) {
 ```
 #### gameTick()
 In dieser Funktion werden alle Spielrelevanten Aktionen durchgeführt. Dazu zählen das erstellen von Items, sowie das Fortbewegen der Schlange. Es wird aber auch geprüft, ob der Spieler noch lebt und die entsprechende Statistik gespeichert und angezeigt.
+
 <a name="item_generation">
 Als erstes wird (falls nötig) das Item generiert. Dafür wird geprüft, ob mehr als *nextItemTickCount* Ticks vergangen sind. Ist dies nicht der Fall, wird kein Item erzeugt. Um zu verhindern, dass bei einem pausiertem Spiel Items generiert werden, wird *ticksSinceLastItem* in diesem Fall immer zurückgesetzt, sodass die Bedingung nicht wahr werden kann.
 Tritt die Bedingung ein, wird *ticksSinceLastItem* ebenfalls zurückgesetzt, da ja nun versucht wird ein Item zu generieren. Nach der Funktion wird *ticksSinceLastItem* um eins inkrementiert, da ein weiterer Tick seit der letzten Item generierung vergangen ist.
