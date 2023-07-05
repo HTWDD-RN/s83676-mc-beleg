@@ -40,6 +40,23 @@ um das Spiel spannend zu erhalten.
   * Snake (Schlange, welche auf der Matrix angezeigt wird "Spielfigur")
   * Statistics (Statistikverwaltung, die auf dem LCD angezeigt wird)
 
+### game_settings
+| Name | Bedeutung | Standardwert | Anmerkung
+| --- | --- | --- | --- |
+| PLAYERS | Anzahl der Spieler | 1 | :warning: Aktuell wird nur ein Spieler unterstützt, diese Definition hat damit keinerlei Wirkung
+| MAX_ITEMS |  Maximale Anzahl der Items, die auf dem Spielfeld generiert werden können | 5 | -
+| DEFAULT_ITEM_SPAWN_TICKS | Gibt an, aller wieviel Ticks ein Item standardmäßig generiert werden soll | 100 | :warning: Es handelt sich lediglich um den Standardwert, der tatsächliche Wert wird mittels einer Zufallsfunktion in Abhängigkeit vom Standardwert generiert, siehe [Itemgenerierung](#item_generation)
+| BLINK_TICKS | Anzahl an Ticks, nach denen die Animation weiter fortschreitet | 10 | -
+
+### hardware_settings
+| Name | Bedeutung | Standardwert | Anmerkung
+| --- | --- | --- | --- |
+|LEDPIN | PIN, an dem die LED Matrix angeschlossen ist | 8 | -
+|LEDCOUNT | Anzahl der LEDS in der Matrix | 256 | :warning: Aktuell werden nur quadratische Matrizen unterstützt (z.B. hier 16x16 -> 256)
+|BUTTONPIN | Pin, an dem der Button angeschlossen ist, mit dem das Spiel gestartet bzw. neu gestartet werden kann | 7 | Im Normalfall wird der Joystick Knopf genommen, es kann aber auch ein anderer Knopf verwendet werden. Dann allerdings unbedingt prüfen, ob ein pullup Widerstand erforderlich ist!
+|JOYSTICKX | Pin, an dem die X-Achse des Joysticks angeschlossen ist | A2 | Je nach verwendetem Joystick muss der Auslösebereich manuell eingestellt werden. Dafür gibt es bisher keine Einstellung, dies muss um Quellcode gemacht werden, siehe [Kommt noch](#todo)
+
+
 ### Snake.ino
 * einbinden aller Bibliotheken
 * LED Matrix, LCD, Spieler, Statistiken, Items (sowie dafür notwendige Parameter) initialisieren
@@ -102,7 +119,7 @@ if(millis() - lastGameTick > 50) {
 ```
 #### gameTick()
 In dieser Funktion werden alle Spielrelevanten Aktionen durchgeführt. Dazu zählen das erstellen von Items, sowie das Fortbewegen der Schlange. Es wird aber auch geprüft, ob der Spieler noch lebt und die entsprechende Statistik gespeichert und angezeigt.
-
+<a name="item_generation">
 Als erstes wird (falls nötig) das Item generiert. Dafür wird geprüft, ob mehr als *nextItemTickCount* Ticks vergangen sind. Ist dies nicht der Fall, wird kein Item erzeugt. Um zu verhindern, dass bei einem pausiertem Spiel Items generiert werden, wird *ticksSinceLastItem* in diesem Fall immer zurückgesetzt, sodass die Bedingung nicht wahr werden kann.
 Tritt die Bedingung ein, wird *ticksSinceLastItem* ebenfalls zurückgesetzt, da ja nun versucht wird ein Item zu generieren. Nach der Funktion wird *ticksSinceLastItem* um eins inkrementiert, da ein weiterer Tick seit der letzten Item generierung vergangen ist.
 
@@ -122,6 +139,7 @@ for(int i = 0; i < MAX_ITEMS; i++) {
 }
 nextItemTickCount = DEFAULT_ITEM_SPAWN_TICKS * random(10, 200) / 100.0;
 ```
+</a>
 
 Anschließend wird im Fall eines laufenden Spiels der Spieler (bzw. seine Schlange) nach vorne bewegt. Abhängig von der Geschwindigkeit wird die Schlange nicht in jedem Tick weiter bewegt, genaueres dazu in der Klasse Snake. Die Funktion gibt zurück, ob die Schlange die Bewegung überlebt hat und speichert dies in die Variable *survived*. Anschließend wird die der Score des Spielers an die Statistik Klasse übergeben. Hat der Spieler nicht überlebt, wird dieser getötet (Hinweis: es wäre eventuell sinnvoller, dies automatisch in der Snake Klasse zu machen) und in der Statistik ebenfalls hinterlegt, dass der Spieler gestorben ist. Anschließend wird der Spielstatus auf 1 gesezt, da diese Runde mit dem Tod eines Spielers beendet ist. Anschließend wird die Statistik auf dem LCD ausgegeben.
 
