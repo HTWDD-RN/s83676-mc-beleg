@@ -45,7 +45,7 @@ um das Spiel spannend zu erhalten.
 | --- | --- | --- | --- |
 | PLAYERS | Anzahl der Spieler | 1 | :warning: Aktuell wird nur ein Spieler unterstützt, diese Definition hat damit keinerlei Wirkung
 | MAX_ITEMS |  Maximale Anzahl der Items, die auf dem Spielfeld generiert werden können | 5 | -
-| DEFAULT_ITEM_SPAWN_TICKS | Gibt an, aller wieviel Ticks ein Item standardmäßig generiert werden soll | 100 | :warning: Es handelt sich lediglich um den Standardwert, der tatsächliche Wert wird mittels einer Zufallsfunktion in Abhängigkeit vom Standardwert generiert, siehe [Itemgenerierung](#gameTick())
+| DEFAULT_ITEM_SPAWN_TICKS | Gibt an, aller wieviel Ticks ein Item standardmäßig generiert werden soll | 100 | :warning: Es handelt sich lediglich um den Standardwert, der tatsächliche Wert wird mittels einer Zufallsfunktion in Abhängigkeit vom Standardwert generiert, siehe [Itemgenerierung](https://github.com/HTWDD-RN/s83676-mc-beleg/edit/main/README.md#gametick)
 | BLINK_TICKS | Anzahl an Ticks, nach denen die Animation weiter fortschreitet | 10 | -
 
 ### hardware_settings
