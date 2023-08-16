@@ -1,6 +1,9 @@
 # Snake auf dem Arduino
-Autor: Florian Königsmann
-Beschreibung: Ein simples Snake Spiel, welches auf einer Neopixel Matrix gespielt werden kann.
+**Autor:** Florian Königsmann (florian.koenigsmann@stud.htw-dresden.de)
+
+**Beschreibung:** Ein Snake Spiel, welches mithilfe eines Arduinos auf einer Neopixel Matrix gespielt werden kann.
+
+**Hinweis:** Sollte an dem Projekt weitergearbeitet werden, würde ich mich freuen, wenn dies in einem Fork des aktuellen Projektes entsteht, sodass dieses anschließend mittels Pull Request wieder in dieses Repository eingefügt werden kann. Über eine umfangreiche Dokumentation würde ich mich freuen. Für Fragen einfach eine E-Mail schreiben oder ein GitHub Issue erstellen.
 
 ## Spielablauf
 Das Spiel wird gestartet, indem auf den Joystick von Spieler 1 gedrückt wird.
@@ -266,6 +269,7 @@ Mithilfe dieser Funktion kann das Item aus dem Spiel entfernt werden **und** wir
 
 ### Snake
 
+
 ### Player
 
 ### Statistics
@@ -303,3 +307,25 @@ Mithilfe dieser Funktion kann für einen Spielers gesetzt werden, dass dieser ve
 
 #### reset()
 Mithilfe dieser Funktion werden die Statistiken zurückgesetzt.
+
+## Todo
+* Multiplayer
+  * Vorraussetzung durch OOP bereits gelegt, lediglich Kollissionsprüfung der Schlangen noch nicht implementiert
+* Auswahl der Farbe der Schlange mittels Keypad
+  * Hexadezimale Eingabe, Anzeige auf dem LCD oder Live auf der Matrix
+* Steuerung mit historischem Joystick
+  * Widerstand für Spannungsteiler der X bzw. Y Achse: 100k Ohm, 10k Ohm sind deutlich zu wenig
+* Überarbeitung des vorhandenen Codes, Optimierungen
+  * Speicherplatz optimieren
+  * Position Klasse / struct, die Koordinaten verwaltet
+  * Ansteuerung von nicht quadratischen Matrix
+  * Ersetzen von einigen unsauberen Funktionen (z.B. konkrete Werte in der Berechnung der Matrixposition, Itemgenerierung)
+* Statistiken ordentlich machen
+  * Leaderboard anzeigen
+  * Custom Namen
+  * eventuell Mehr als 2 Spieler anzeigen
+* Mehr Items
+  * Stern, der unsterblich macht
+  * Giftitem, welches man nicht fressen sollte bzw. generell Hindernisse
+* Zusätzliche Spielmodi
+  * keine Außenränder
