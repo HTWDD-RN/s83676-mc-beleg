@@ -79,7 +79,7 @@ um das Spiel spannend zu erhalten.
 * Matrix zeichnen, Schlange nun erkennbar
 * Standardwerte festlegen
 
-### loop()
+#### loop()
 Wird der Knopf losgelassen, wird der Eingang des Button LOW. Es wird sofort *buttonPressed* auf false gesetzt, um auf weitere Knopfeingaben reagieren zu können.
 Das wird benötigt, da der Knopf aufgrund der Trägheit des Nutzes in der Regel mehrere loop Durchgänge gedrückt bleibt. Es soll verhindert werden, dass in diesem Fall das Spiel beispielsweise mehrfach zurückgesetzt wird oder direkt nach dem zurücksetzen startet. Jede Knopfabfrage, die dieses Feature benötigt, muss neben der digitalen Abfrage des Knopfzustandes auch noch prüfen, ob *buttonPressed* == false ist. 
 ```C++
@@ -156,7 +156,7 @@ if(gameState == 2) {
 }
 ```
 
-Ist der Spieler gestorben, wird abschließend eine Blinkanimation abgespielt. Da diese mit der eigentlichen Tickrate viel zu schnell wäre, wird sie nur alle in *BLINK_TICKS* festgelegten Ticks ausgeführt. Dafür wird ebenfalls wieder gezählz, wie viele Ticks seit der letzten Animation vergangen sind bzw. die Tick Anzahl wird mit jedem Animationsschritt zurückgesetzt.
+Ist der Spieler gestorben, wird abschließend eine Blinkanimation abgespielt. Da diese mit der eigentlichen Tickrate viel zu schnell wäre, wird sie nur alle in *BLINK_TICKS* festgelegten Ticks ausgeführt. Dafür wird ebenfalls wieder gezählt, wie viele Ticks seit der letzten Animation vergangen sind bzw. die Tick Anzahl wird mit jedem Animationsschritt zurückgesetzt.
 Die Methode *blink()* der Klasse Snake sorgt automatisch dafür, dass die richtigen Farben angezeigt werden.
 
 ```C++
@@ -170,3 +170,51 @@ Anschließend werden alle in diesem Tick ausgeführten Spielveränderungen auf d
 ```C++
 m.show();
 ```
+
+### Matrix
+* Abstrahiert Hardware zu einer quadratischen RGB Matrix
+* Speichert Farben aller Pixel in privatem Array (für jeden Pixel der Matrix ein Arrayeintrag mit Farbe)
+* Stellt Funktion zum setzen einer Pixelfarbe bereit
+* Stellt Funktion zum Anzeigen der aktuellen Farben auf der Matrix bereit
+* In diesem Projekt
+  * Keine reale Matrix mit Nummerierung (0; 0) ... (15; 15), sondern
+  * WS2812B Neopixel, welche Schlangenförmig miteinander verbunden sind
+  * Funktion nötig, welche Matrix Position in Neopixel Position umwandelt
+  * Verwenden der FastLED Bibliothekt zur Ansteuerung der Neopixel
+  * Initial sind alle Pixel aus (0x000000)
+
+:warning: Die Stromversorgung reicht in diesem Fall **NICHT** aus, um alle drei Farben jedes Pixel in der vollen Helligkeit leuchten zu lassen, dies gilt es bei der verwendung zu berücksichtigen! Um das Problem zu umgehen wäre es denkbar, die maximale Helligkeit zu dimmen (z.B. jede Farbe darf maximal auf den Wert 155 gesetzt werden) und die zwischenliegenden Farben zu interpolieren. 
+
+#### setPixelColor()
+Mithilfe dieser Funktion wird die Farbe eines Pixels an einer Koordinate gesetzt.
+
+Die Funktion gibt true zurück, wenn die Pixelfarbe übernommen wurde, andernfalls false. Die Pixelfarbe kann nicht übernommen werden, wenn die x oder y Position außerhalb des zulässigen Wertebereiches liegen, oder die Farbe eines Pixels gesetzt werden soll, welcher bereits farbig ist.
+
+| Parametername | Typ | Bedeutung | Anmerkung
+| --- | --- | --- | --- |
+| x | byte | x Position des Pixels auf der Matrix | Werteberich: 0 - 15
+| y | byte | y Position des Pixels auf der Matrix | Werteberich: 0 - 15
+| color | CRGB | Farbe, auf die der Pixel gesetzt werden soll | Typ aus der Bibliothek FastLED.h
+| overwrite | bool | Gibt an, ob eine gesetzte Pixelfarbe (außer 0x000000) überschrieben werden darf | -
+
+**Beispiel der Indexberechnung anhand einer 4x4 Matrix:** Auf der linken Seite ist die reale Nummerierung der Neopixel auf dem Streifen angegeben, die Nummern sind dabei im Programmcode die entsprechenden Indizes im Array. Rechts daneben sind die Koordinaten, wie sie für eine Matrix üblich sind und auf der ganz rechten Seite die Umrechnungsformel von Matrix Koordinaten in die entsprechenden Indizes.
+
+ 
+| reale Nummerierung *n* | Matrix Koordinaten (x;y) | Formel |
+| ------------------ | ------------------ | ------ |
+| <table> <tr> <td>3</td> <td>2</td> <td>1</td> <td>0</td> </tr> <tr> <td>4</td> <td>5</td> <td>6</td> <td>7</td> </tr> <tr> <td>11</td> <td>10</td> <td>9</td> <td>8</td> </tr> <tr> <td>12</td> <td>13</td> <td>14</td> <td>15</td> </tr> </table> | <table> <tr> <td>(0;0)</td> <td>(1;0)</td> <td>(2;0);</td> <td>(3;0)</td> </tr> <tr> <td>(0;1)</td> <td>(1;1)</td> <td>(2;1);</td> <td>(3;1)</td> </tr> <tr> <td>(0;2)</td> <td>(1;2)</td> <td>(2;2);</td> <td>(3;2)</td> </tr> <tr> <td>(0;3)</td> <td>(1;3)</td> <td>(2;3);</td> <td>(3;3)</td> </tr> </table> | <table> <tr> <td>n = 4 * y + (3 - x)</td> </tr> <tr> <td>n = 4 * y + x</td> </tr> <tr> <td>n = 4 * y + (3 - x)</td> </tr> <tr> <td>n = 4 * y + x</td> </tr> </table>
+
+Wie man in dem Beispiel sehen kann, gibt es lediglich 2 Formeln zur Umrechnung. Diese sind von der Nummer der Zeile (y Koordinate) abhängig und treten abwechselnd auf. Somit kann dies durch eine einfach Modulo Fallunterscheidung realisiert werden.
+
+```C++
+int arrayPos = 4 * y + x;
+if(y % 2 == 0) {
+  arrayPos = 4 * y + (3 - x);
+}
+```
+
+ Die Berechnung für die 16x16 Matrix erfolgt nach demselben Konzept.
+
+#### show()
+Diese Funktion überträgt die aktuellen, im Array gespeicherten, Farben an die Neopixel, und zeigt diese an.
+
