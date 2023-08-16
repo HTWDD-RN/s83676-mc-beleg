@@ -383,7 +383,30 @@ Dazu wird die Richtugnsvariable _mDirection_ einfach verringert. Bei einer Drehu
 ** :warning: Da der Typ byte vorzeichenlos ist, wird aus der -1 eine 255, welche damit größer 3 ist!
 
 ### Player
+* Spieler, welcher genau einer Schlange zugeordnet ist
+  * von Snake Klasse abgeleitet
+* beinhaltet Steuerung der Schlange mittels Joystick
 
+| Variablenname | Typ | Beschreibung | Anmerkung |
+| --- | --- | --- | --- |
+| mAllowNextDirection | bool | _True_, wenn der Spieler die nächste Eingabe machen kann, da die letzte Eingabe ausgeführt wurde, sonst _false_ | Verhindert, dass ein Spieler in einem Schritt mehrere Richtungsänderungen durchführen kann |
+| mJoyStickXDefaultPosition | bool | _True_, sobald der Joystick einmal seine Ausgangslage bezüglich der x - Achse erreicht hat, sonst _false_ | Vermeidet, dass durch zu langes halten des Joysticks mehrere Richtungswechsel durchgeführt werden. |
+
+#### handleJoyStick()
+Mithilfe dieser Funktion wird der Joystick ausgelesen und verarbeitet.
+
+| Parametername | Typ | Bedeutung | Anmerkung |
+| --- | --- | --- | --- |
+| joyStickX | int | Messwert der X Achse des Joysticks | - |
+
+Wenn der ausgelesene Wert des Joysticks kleiner 350 ist, wurde der Joystick nach links bewegt und die Schlange dreht sich nach links. Ist der Wert > 650, so führt sie eine Rechtsdrehung durch.
+
+Nachdem eine Richtungsänderung registriert wurde, wird die Richtungsänderung (_mAllowNextDirection_) solange gesperrt, bis sich die Schlange durch _moveForward()_ weiter bewegt hat. Wie oben genannt soll dies verhindern, dass ein Spieler innerhalb eines Schrittes nicht mehrere Richtungveränderungen durchführen kann, da sich die Schlange sonst beispielsweise rückwärts bewegen müsste (zweimal rechts oder links).
+Außerdem wird die _mJoyStickDefaultPosition_ auf _false_ gesetzt, da der Joystick vor jeder neuen Aktion einmal in der Mitte positioniert werden muss. Dadurch wird verhindert, dass ein zu langes halten des Joysticks in einer Richtung zu ungewollten mehrfachen Richtungsänderungen führt. Dies ist insbesondere in schnellen Leveln ein Problem, wenn die Schlange so schnell ist, dass selbst ein kurzes halten des Joysticks in einer Richtung zu mehreren, unkontrollierten Drehungen der Schlange führt und sich das Spiel dadurch träge anfühlt. Diese Variable wird zurückgesetzt, sobald der Wert des Joysticks in einem Bereich zwischen 350 und 650 befindet.
+
+#### moveForward()
+Diese Funktion ermöglicht das freigeben der nächsten Bewegung, nachdem ein Schritt der Schlange ausgeführt wurde. Mithilfe der _hasMoved_ Variable wird ausgewertet, ob die Schlange sich in diesem Tick bewegt hat, oder nicht. Hat sie sich bewegt, so wird _mAllowNextDirection_ auf _true_ gesetzt, um die nächste Richtungseingabe zu erlauben.
+Da diese Funktion eine Überschreibung der von der Snake Klasse vererbten Funktion _moveForward()_ ist, gibt auch diese zurück, ob der Spieler noch lebt, oder nicht. 
 ### Statistics
 * Statistiken, die auf einem LCD angezeigt werden können
 * Anzeigen von Spielername (aktuell nur Spieler 1) und dessen Punktahl
