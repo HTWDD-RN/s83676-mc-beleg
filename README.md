@@ -186,7 +186,11 @@ m.show();
   * Verwenden der FastLED Bibliothekt zur Ansteuerung der Neopixel
   * Initial sind alle Pixel aus (0x000000)
 
-:warning: Die Stromversorgung reicht in diesem Fall **NICHT** aus, um alle drei Farben jedes Pixel in der vollen Helligkeit leuchten zu lassen, dies gilt es bei der verwendung zu berücksichtigen! Um das Problem zu umgehen wäre es denkbar, die maximale Helligkeit zu dimmen (z.B. jede Farbe darf maximal auf den Wert 155 gesetzt werden) und die zwischenliegenden Farben zu interpolieren. 
+:warning: Die Stromversorgung reicht in diesem Fall **NICHT** aus, um alle drei Farben jedes Pixel in der vollen Helligkeit leuchten zu lassen, dies gilt es bei der verwendung zu berücksichtigen! Um das Problem zu umgehen wäre es denkbar, die maximale Helligkeit zu dimmen (z.B. jede Farbe darf maximal auf den Wert 155 gesetzt werden) und die zwischenliegenden Farben zu interpolieren.
+
+| Variablenname | Typ | Beschreibung | Anmerkung |
+| --- | --- | --- | --- |
+| leds | CRGB[] | Speichert für jedes Pixel der Matrix die Farbe | Größe des Arrays wird mittels [LEDCOUNT](#hardware_settings) auf die maximal mögliche Anzahl der Pixel gesetzt |
 
 #### setPixelColor()
 Mithilfe dieser Funktion wird die Farbe eines Pixels an einer Koordinate gesetzt.
@@ -268,7 +272,115 @@ Mithilfe dieser Funktion kann das Item aus dem Spiel entfernt werden, **ohne** d
 Mithilfe dieser Funktion kann das Item aus dem Spiel entfernt werden **und** wird dabei von der Matrix gelöscht.
 
 ### Snake
+* Schlange, die sich durch das Spielfeld bewegt
+* Schlange stirbt bei Kollission mit sich selbst oder dem Rand
+* Beim fressen eines Item gibt es verschieden Effekte:
+  * Schlange wird ein Feld länger
+* Mit zunehmender Länge wird die Schlange schneller
 
+| Variablenname | Typ | Beschreibung | Anmerkung |
+| --- | --- | --- | --- |
+| mDisplay | Matrix* | Zeiger auf die Matrix, auf welcher die Schlange angezeigt werden soll | - |
+| mColor | CRGB | Farbe der Schlange | Typ aus der Bibliothek FastLED.h
+| mDirection | byte | Richtung, in welche sich die Schlange aktuell bewegt | <table> <tr> <th> Richtung </th> <th> Numerische Repräsentation </th> </tr> <tr> <td>Hoch</td> <td>0</td> </tr> <tr> <td>Rechts</td> <td>1</td> </tr> <tr> <td>Runter</td> <td>2</td> </tr> <tr> <td>Links</td> <td>3</td> </tr> </table> |
+| mStartX | byte | x Koordinate der Startposition | Wertebereich: 0 - 15 |
+| mStartY | byte | y Koordinate der Startposition | Wertebereich: 0 - 15 |
+| mDead | bool | Gibt an, ob die Schlange tot ist | - |
+| mBlinkColor | bool | True, wenn aktuell die Schlange die Farbe haben soll, wenn sie blinkt, false falls es die Standardfarbe sein soll | - |
+| mStartLength | int | Startlänge der Schlange | - |
+| mLength | int | Aktuelle Länge der Schlange |
+| mSnakePartsX | byte[] | Speichert die x Koordinaten aller Pixel der Schlange | Größe des Arrays wird mittels [LEDCOUNT](#hardware_settings) auf die maximal mögliche Anzahl der Pixel gesetzt |
+| mSnakePartsY | byte[] | Speichert die y Koordinaten aller Pixel der Schlange | Größe des Arrays wird mittels [LEDCOUNT](#hardware_settings) auf die maximal mögliche Anzahl der Pixel gesetzt |
+| ticksSinceLastMove | int | Anzahl der Ticks, die seit der letzten Bewegung vergangen sind | - |
+| gameItems | Item* | Zeiger auf Array aller Items, welche auf dem Spielfeld erscheinen können | Eventuell andere Realisierung prüfen, es wirkt unsinnig die Items an die Schlange zu übergeben |
+
+#### reset()
+Mithilfe dieser Funktion werden alle farbigen Pixel der Schlange zurückgesetzt auf aus (0x000000), sowie alle Variablen auf ihre Standardwerte gesetzt. Anschließend wird die Schlange an ihrer Startposition gezeichnet.
+
+Da die Schlange vertikal gezeichnet werden, wird beim einfärben der Pixel immer derselbe x Wert (_mStartX_) verwendet und nur der y Wert mit _mStartY_ beginnend _mLength_ mal inkrementiert.
+ ```C++
+for(int i = 0; i < mLength; i++) {
+  mSnakePartsX[i] = mStartX;
+  mSnakePartsY[i] = mStartY + i;
+  mDisplay->setPixelColor(mSnakePartsX[i], mSnakePartsY[i], mColor, true);
+}
+ ```
+
+#### die()
+Setzt die Variable _mDead_ auf _true_, um die Schlange als tot zu deklarieren.
+
+#### dead()
+Gibt _true_ zurück, falls die Schlange tot ist, andernfalls _false_.
+
+#### blink()
+Diese Funktion steuert das Blinkverhalten der Schlange. Beim aufrufen wird die komplette Schlange alternierend in ihrer normalen Farbe und der Blinkfarbe (0xFF0000) gezeichnet.
+
+#### initItems()
+Mithilfe dieser Funktion wird dem Objekt das initialisierte Item Array übergeben.
+
+#### moveForward()
+Mit dem aufrufen dieser Funktion bewegt sich die Schlange einen Schritt vorwärts und führt dabei alle spielrelevanten Überprüfungen aus. Hier wird außerdem die Geschwindigkeit der Schlange gesteuert, indem sie sich nicht mit jedem Tick weiter bewegt, sondern in einem Tickintervall in Abhängigkeit ihrer Länge. hat die Schlange diesen Spielzug überlebt, gibt die Funktion _true_ zurück, andernfalls _false_.
+
+| Variablenname | Typ | Beschreibung | Anmerkung |
+| --- | --- | --- | --- |
+| moved | bool* | Die Funktion schreibt _true_ in die Pointer Variable, wenn sich die Schlange bewegt hat, andernfalls _false_. | Der boolean muss beim Aufrufer angelegt und als Pointer übergeben werden |
+
+Im folgenden Abschnitt wird die Geschwindigkeit der Schlange in Abhängigkeit von ihrer **gewachsenen Länge** (_mLength_ - _mStartLength_) geregelt. Die Abklingzeit zwischen den Schritten verringert sich alle 5 Schlangenverlängerungen um einen Tick.
+Dafür wird für jeden Schritt der Counter _ticksSinceLastMove_ erhöht.Überschreitet dieser den an die Länge angepassten Schwellenwert, so wird der Counter zurückgesetzt und die Schlange bewegt sich einen Pixel weiter. Beispielsweise hat die Schlange direkt nach dem Start ein Delay von 10 Ticks, da die davon abgezogene **gewachsene Länge** durch 5 geteilt gleich 0 ist. Da die Nachkommastellen abgeschnitten werden, ist beispielsweise für eine **gewachsene Länge** von 4 der abgezogene Term 4/5 weiterhin gleich 0. Erst ab der nächsten Stufe ist dieser Bruch gleich 1 und das Timeout damit nurnoch 9 Ticks.
+
+Erfolgt kein Schritt, so wird die Pointervariable _moved_ auf _false_ gesetzt, um der Aufruferfunktion (wenn nötig) mitzuteilen, dass die Bewegung noch nicht verarbeitet wurde, andernfalls wird sie auf _true_ gesetzt. Außerdem wird sofort _true_ zurückgegeben, da die Schlange ohne einer Bewegung auch nicht sterben kann.
+
+```C++
+if(ticksSinceLastMove < 10 - (mLength - mStartLength) / 5) {
+  ticksSinceLastMove++;
+  *moved = false;
+  return true;
+}
+ticksSinceLastMove = 0;
+*moved = true;
+```
+
+Anschließend wird in Abhängigkeit von der aktuellen Richtung _mDirection_ die neue Kopfposition (_newHeadX_; _newHeadY_) berechnet. Folgende Tabelle zeigt, wie die neuen Positionen in Abhängigkeit von der alten Kopfposition (_mSnakePartsX[0]_; _mSnakePartsY[0]_) zustande kommen:
+
+| Bewegungsrichtung (_mDirection_)| Neuer x Wert _newHeadX_ | Neuer Y Wert _newHeadY_ | Erklärung |
+| --- | --- | --- | --- |
+| oben (_UP_, 0) | gleich | _mSnakePartsY[0]_ - 1 | Verschiebung nur auf y Achse, oben sind y Werte kleiner |
+| rechts (_RIGHT_, 1) | _mSnakePartsX[0]_ + 1 | gleich | Verschiebung nur auf x Achse, rechts sind x Werte größer |
+| unten (_DOWN_, 2) | gleich | _mSnakePartsY[0]_ + 1 | Verschiebung nur auf y Achse, unten sind y Werte größer |
+| links (_LEFT_, 3) | _mSnakePartsX[0]_ - 1 | gleich | Verschiebung nur auf x Achse, links sind x Werte kleiner |
+
+Ist die x oder y Koordinate des Kopfes außerhalb des Spielfeldes, also kleiner 0 oder größer 15, so stirbt die Schlange und es wird _false_ zurückgegeben.
+
+Anschließend wird geprüft, ob es durch die Bewegung eine Kollission mit einem Item gab. Dafür wird das Item Array durchlaufen und für jedes Item geprüft ob es auf dem Spielfeld existiert und eine Kollission vorliegt. Gibt es eine Kollission, so wird die Schleife verlassen, da keine weitere Kollission möglich ist (es kann ja immer nur ein Item an einer Stelle geben). Anschließend wird der Pixels des Schwanzendes der Schlange deaktiviert, da sie sich ja weiter bewegen soll. Wurde allerdings ein Item gefressen (_gotItem_ = _true_), welches die Schlange verlängert kann dies einfach realisiert werden indem dieser letzte Pixel niht deaktiviert wird. Dies geschieht im unte gezeigten Snippet.
+
+```C++
+if(!gotItem) {
+  mDisplay->setPixelColor(mSnakePartsX[mLength - 1], mSnakePartsY[mLength - 1], 0x000000, true);
+}
+```
+
+Nun wird die Bewegung der Schlange in die Arrays _mSnakePartsX_ und _mSnakePartsY_ übertragen. Dafür rückt jedes Element, beginnend mit dem vorletzten einen Index nach hinten d.h. der vorletzte Wert rückt an die Stelle des letzten, die des vorvorletzten and die des vorletzten und so weiter. Der Index 0, also die Kopfposition wird später durch die neuen Kopfkoordinaten _newHeadX_ und _newHeadY_ ersetzt.
+
+Außerdem wird geprüft, ob die Schlange sich selbst frisst. Tritt eine Kollission auf, so stirbt die Schlange und es wird _false_ zurückgegeben.
+Andernfalls hat die Schlange den Spielzug überlebt undd es wird _true_ zurückgegeben.
+
+#### checkCollission()
+Mithilfe dieser Methode wird überprüft, ob der Schlangenkopf mit sich selbst kollidiert. Gibt es eine überschneidung, wird _true_ zurückgegeben, sonst _false_. Dafür werden alle Pixel der Schlange durchlaufen und geprüft, ob eines dieser Pixel die gleiche Koordinate wie der Kopf hat. 
+
+| Parametername | Typ | Bedeutung | Anmerkung |
+| --- | --- | --- | --- |
+| x | byte | x Position des Schlangenkopfes | - |
+| y | byte | y Position des Schlangenkopfes | - |
+
+#### turnRight()
+Diese Methode ändert die Richtung der Schlange im Uhrzeigersinn. Ist die Richtung der Schlange beispielsweise oben, zeigt sie anschließend nach rechts usw.
+Dazu wird die Richtugnsvariable _mDirection_ einfach erhöht. Bei einer Drehung aus der Richtung links (_LEFT_, 3) nach rechts müsste oben (_UP_, 0) folgen, durch die Inkrementierung wäre der Wert der Variable allerdings 4, deshalb wird sie wieder auf 0 (_UP_) gesetzt. 
+
+#### turnLeft()
+Diese Methode ändert die Richtung der Schlange gegen den Uhrzeigersinn. Ist die Richtung der Schlange beispielsweise oben, zeigt sie anschließend nach links usw.
+Dazu wird die Richtugnsvariable _mDirection_ einfach verringert. Bei einer Drehung aus der Richtung oben (_LEFT_, 3) nach links müsste links (_LEFT_, 3) folgen, durch die Dekrementierung wäre der Wert der Variable allerdings 255** deshalb wird sie wieder auf 3 (_LEFT_) gesetzt.
+
+** :warning: Da der Typ byte vorzeichenlos ist, wird aus der -1 eine 255, welche damit größer 3 ist!
 
 ### Player
 
