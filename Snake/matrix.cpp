@@ -17,13 +17,6 @@ bool Matrix::setPixelColor(byte x, byte y, CRGB color, bool overwrite) {
     arrayPos = 16 * y + (15 - x);
   }
 
-  // if(y % 2 == 0) {
-  //   leds[16 * y + (15 - x)] = color;
-
-  // }else {
-  //   leds[16 * y + x] = color;
-  // }
-
   CRGB off = 0x000000;
 
   if(!overwrite && leds[arrayPos] != off) {
