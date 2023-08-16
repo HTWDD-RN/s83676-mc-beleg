@@ -264,3 +264,42 @@ Mithilfe dieser Funktion kann das Item aus dem Spiel entfernt werden, **ohne** d
 #### clear()
 Mithilfe dieser Funktion kann das Item aus dem Spiel entfernt werden **und** wird dabei von der Matrix gelöscht.
 
+### Snake
+
+### Player
+
+### Statistics
+* Statistiken, die auf einem LCD angezeigt werden können
+* Anzeigen von Spielername (aktuell nur Spieler 1) und dessen Punktahl
+* Anzeigen, wenn Spieler gestorben ist
+
+| Variablenname | Typ | Beschreibung | Anmerkung |
+| --- | --- | --- | --- |
+| mDisplay | LiquidCristal* | Zeiger auf LCD Display, welches die Infos anzeigen soll | Typ aus der Bibliothek LiquidCrystal.h |
+| playerScores | int[] | Speichert die Scores der einzelnen Spieler | Größe des Arrays wird mittels [PLAYERS](#game_settings) auf die aktuelle Spieleranzahl angepasst |
+| playersDead | bool[] | Speichert für jeden Spieler, ob dieser gestorben ist | Größe des Arrays wird mittels [PLAYERS](#game_settings) auf die aktuelle Spieleranzahl angepasst |
+
+:information_source: Die Konfiguration der Zeilen und Spaltenanzahl des LCD findet aktuell noch im Konstruktor statt.
+
+#### printPlayers()
+Mithilfe dieser Funktion werden alle Spieler, sowie deren Score auf das LCD ausgegeben. Ist ein Spieler gestorben, wird des weiteren ein _X_ ausgegeben.
+
+:warning: Da das Display nur 2 Zeilen hat, können aktuell nicht mehr als 2 Spieler angezeigt werden!
+
+#### setPlayerScore()
+Mithilfe dieser Funktion kann der Score eines Spielers gesetzt werden.
+
+| Parametername | Typ | Bedeutung | Anmerkung |
+| --- | --- | --- | --- |
+| playerId | byte | Id des Spielers | :warning: Aktuell wird nicht geprüft, ob die _playerId_ zulässig ist |
+| score | int | der Score des Spielers | - |
+
+#### playerDead()
+Mithilfe dieser Funktion kann für einen Spielers gesetzt werden, dass dieser verloren hat.
+
+| Parametername | Typ | Bedeutung | Anmerkung |
+| --- | --- | --- | --- |
+| playerId | byte | Id des Spielers | :warning: Aktuell wird nicht geprüft, ob die _playerId_ zulässig ist |
+
+#### reset()
+Mithilfe dieser Funktion werden die Statistiken zurückgesetzt.
