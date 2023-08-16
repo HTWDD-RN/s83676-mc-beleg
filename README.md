@@ -218,3 +218,49 @@ if(y % 2 == 0) {
 #### show()
 Diese Funktion überträgt die aktuellen, im Array gespeicherten, Farben an die Neopixel, und zeigt diese an.
 
+### Item
+* Spielitem, welches von der Schlange gefressen werden kann
+* Stellt Funktionen zum erstellen, entfernen sowie zur Kollissionsprüfung bereit
+* Zeichnet Item direkt auf Matrix
+* Mehrere Itemtypen können unterstützt werden :warning: Aktuell gibt es lediglich die Möglichkeit mehrere Typen festzulegen, allerdings ohne Funktionalität
+
+| Variablenname | Typ | Beschreibung | Anmerkung |
+| --- | --- | --- | --- |
+| mDisplay | Matrix* | Zeiger auf die Matrix, auf welcher das Item angezeigt werden soll | - |
+| mPosX | byte | x Position des Items | Wertebereich: 0 - 15, Initial 255 |
+| mPosY | byte | y Position des Items | Wertebereich: 0 - 15, Initial 255 |
+| mType | byte | Typ des Items | :warning: Noch ohne Nutzen |
+
+:information_source: Mittels _mPosX_ = 255 kann ausgedrückt werden, dass das Item nicht im Spiel existiert. Dies kann beispielsweise genutzt werden, um ein Array mit Items anzulegen und diese erst später auf dem Spielfeld erscheinen zu lassen.
+
+#### generateItem()
+Mithilfe dieser Funktion lässt sich ein Item (eines bestimmen Typs) an einer bestimmen Position erzeugen.
+Die Funktion gibt _true_ zurück, wenn das Item erstellt werden konnte, andernfalls _false_. Ein Item kann nicht generiert werden, wenn es sich mit einem anderen Item überlappt, oder auf einer Schlange entstehen würde.
+Die Überprügung dieser Bedingung erfolgt aktuell über das direkte aufrufen von _setPixelColor()_, mit dem Parameter **_overwrite = false_**. Somit können nur Items auf leeren Feldern generiert werden.
+
+| Parametername | Typ | Bedeutung | Anmerkung |
+| --- | --- | --- | --- |
+| x | byte | x Position des Items auf der Matrix | Werteberich gemäß _setPixelColor()_ der Matrix |
+| y | byte | y Position des Items auf der Matrix | Werteberich gemäß _setPixelColor()_ der Matrix |
+| type | byte | Typ des generierten Items | :warning: Ohne Funktion |
+
+#### exists()
+Mithilfe dieser Funktion kann geprüft werden, ob ein Item auf dem Spielfeld existiert (_true_), oder nur temporär angelegt wurde (_false_).
+
+#### checkCollission()
+Mithilfe dieser Funktion kann geprüft werden, ob für eine spezielle Koordinate eine Kollission mit diesem Item vorkommt. Da eine Kollission nur durch eine Schlange stattfinden kann welche das Item frisst wird _mPosX_ und _mPosY_ auf 255 zurückgesetzt. Das umfärben des Pixels auf der Matrix ist in dem Fall nicht nötig, da es durch die Schlange ohnehin überschrieben wird.
+Tritt eine Kollission auf, wird _true_ zurückgegeben, andernfalls _false_.
+
+| Parametername | Typ | Bedeutung | Anmerkung |
+| --- | --- | --- | --- |
+| x | byte | x Position des Items | - |
+| y | byte | y Position des Items | - |
+
+#### remove()
+Mithilfe dieser Funktion kann das Item aus dem Spiel entfernt werden, **ohne** dabei von der Matrix gelöscht zu werden. Dies geschieht durch setzen von _mPosX_ und _mPosY_ auf 255. Um außerdem von der Matrix gelöscht zu werden, dient die Funktion _clear()_
+
+:information_source: Ein aktueller Anwendungsfall für diese Funktion ist das entfernen eines Items, falls es auf einer Schlange oder einem anderen Item generiert wird, da in diesem Fall die Pixelfarbe nicht zurückgesetzt werden soll.
+
+#### clear()
+Mithilfe dieser Funktion kann das Item aus dem Spiel entfernt werden **und** wird dabei von der Matrix gelöscht.
+
