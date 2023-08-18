@@ -26,6 +26,9 @@ um das Spiel spannend zu erhalten.
 * Joystickmodul (+ analoger Joystick mittels [Gameport](https://de.wikipedia.org/wiki/Gameport))
 * 16x16 Matrix [WS2812B](https://www.mikrocontroller.net/articles/WS2812_Ansteuerung) inklusive Spannungsversorgung mittels 50W Netzteil
 
+In folgender Abbildung wird die vollständige Schaltung abgebildet. Das schwarz, rote Kabel mit dem blauen Stecker ist der Anschluss an die LED Matrix. Die Komponenten links des Joysticks (Widerstände sowie Jumper Kabel) dienen dem Anschluss des Keypads und werden aktuell nicht benötigt.
+![Anschluss aller Komponenten an den Arduino](wiring.jpg)
+
 ## Software
 * Arduino IDE
 * LCD Bibliothek [LiquidCrystal](https://www.arduino.cc/reference/en/libraries/liquidcrystal/)
@@ -448,8 +451,11 @@ Mithilfe dieser Funktion werden die Statistiken zurückgesetzt.
   * Vorraussetzung durch OOP bereits gelegt, lediglich Kollissionsprüfung der Schlangen noch nicht implementiert
 * Auswahl der Farbe der Schlange mittels Keypad
   * Hexadezimale Eingabe, Anzeige auf dem LCD oder Live auf der Matrix
-* Steuerung mit historischem Joystick
+* Steuerung mit analogem Joystick
   * Widerstand für Spannungsteiler der X bzw. Y Achse: 100k Ohm, 10k Ohm sind deutlich zu wenig
+  * :warning: Die Nummerierung (des ersten und letzten Pins) sind beim verkleinern der Leiterplatte unleserlich geworden, es sollte eine bessere Kennzeichnung erfolgen. Pin 1 liegt auf der Seite, an der **kein** Anschlusspin der Pinfahne übrig ist (schwarze "1" auf der Abbildung). Folgende Abbildung zeigt den Beispielhaften Anschluss der Taste 1 (Pin 2, violetter Jumper) und der y Achse des Joysticks (Pin 6, gelber Jumper).
+  * :information_source: Ich selber habe noch nicht viel mit dem Joystick experimentiert, lediglich die Tasten sowie die x bzw. y Achse ausgelesen. Das auslesen der Tasten hat allerdings nicht wirklich gut funktioniert und ich weiß auch nicht, ob alle Anschlüsse (Masse und 5V) benötigt werden Die entsprechende Experimentierarbeit überlasse ich dem Nachfolger dieses Projektes ;)
+  ![Anschluss des Joysticks an den Arduino](joystick.jpg)
 * Überarbeitung des vorhandenen Codes, Optimierungen
   * Speicherplatz optimieren
   * Position Klasse / struct, die Koordinaten verwaltet
