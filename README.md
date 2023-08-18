@@ -469,4 +469,4 @@ Mithilfe dieser Funktion werden die Statistiken zurückgesetzt.
   * Stern, der unsterblich macht
   * Giftitem, welches man nicht fressen sollte bzw. generell Hindernisse
 * Zusätzliche Spielmodi
-  * keine Außenränder
+  * kein sterben an den Außenrändern, stattdessen auf der gegenüberliegenden Seite wieder auftauchen
